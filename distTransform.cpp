@@ -7,6 +7,7 @@
 using namespace cv;
 
 int contourThreshold = 255;
+float thresh = 0.2f;
 
 
 
@@ -21,7 +22,6 @@ int main(){
         std::cerr<<"Error: cannot open image \n";
     }
   
-
     Mat img_grey, dist, canny_edges;
     cvtColor(image, img_grey, CV_BGR2GRAY);
     blur( img_grey, img_grey, Size(3,3) );
@@ -35,9 +35,30 @@ int main(){
     for( int i = 0; i< contours.size(); i++ ){
         drawContours( drawing, contours, i, Scalar(0,0,0), 2, 8, hierarchy, 0, Point() );
     }
-    distanceTransform(drawing, dist, CV_DIST_L2, 3); //apply distance transfrom
-    normalize(dist, dist, 0, 1., NORM_MINMAX);
 
+    Mat bw;
+    cvtColor(image, bw, CV_BGR2GRAY);
+    threshold(bw, bw, 10, 100, CV_THRESH_BINARY | CV_THRESH_OTSU);
+
+   distanceTransform(bw, dist, DIST_L2, 3); //apply distance transfrom
+  normalize(dist, dist, 0, 1., NORM_MINMAX);
+
+    for(int x = 0; x<dist.rows; x++){
+        for (int y =0; y<dist.cols; y++){
+           if(dist.at<float>(x, y)>(0.2)){
+               dist.at<float>(x, y)= 0;
+            }
+            else if(dist.at<float>(x, y)<(0.1)){
+                dist.at<float>(x, y)= 1;
+            }
+            else{
+                dist.at<float>(x, y)= 0.5;
+            }
+        }
+       
+    }
+
+    namedWindow("myWindow", WINDOW_AUTOSIZE);
     char exit_key_press = 0;
     do {
         imshow("myWindow",dist);
