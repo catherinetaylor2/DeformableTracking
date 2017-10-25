@@ -123,6 +123,16 @@ void GCApplication::showImage() const{
     if( rectState == IN_PROCESS ) //display rectangle
         rectangle( res, Point( rect.x, rect.y ), Point(rect.x + rect.width, rect.y + rect.height ), GREEN, 2);
 
+    for( int x = 0; x < res.rows; x++ ) {
+        for( int y = 0; y < res.cols; y++ ) {
+            if ( res.at<Vec3b>(x, y) == Vec3b(0,0,0 )) {
+                res.at<Vec3b>(x, y)[0] = 255;
+                res.at<Vec3b>(x, y)[1] = 255;
+                res.at<Vec3b>(x, y)[2] = 255;
+            }
+        }
+    }
+
     imshow( *winName, res );
     imwrite("SegmentedImages/seg0001.jpg", res);
 }
