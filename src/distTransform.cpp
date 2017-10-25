@@ -3,20 +3,23 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <segmentation.h>
 
 using namespace cv;
 
 float thresh = 0.1f;
 
-int main(){
-    std::string filename;
-    filename = "SegmentedImages/seg0001.jpg";
+int SegmentImage(std::string filename){
+   // std::string filename;
+   // filename = "SegmentedImages/seg0001.jpg";
     if(filename.empty()){
         std::cerr<<"Error:no such file \n";
+        return -1;
     }
     Mat image = imread( filename, 1 );
     if(image.empty()){
         std::cerr<<"Error: cannot open image \n";
+        return -1;
     }
   
     Mat dist, bw;
@@ -48,5 +51,5 @@ int main(){
         exit_key_press = cvWaitKey(1);
     }while (exit_key_press != '\x1b');
 
-    return 0;
+    return 1;
 }

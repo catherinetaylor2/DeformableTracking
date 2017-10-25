@@ -7,6 +7,7 @@
 
 #include <iostream>
 
+
 //using namespace std;
 using namespace cv;
 
@@ -135,7 +136,7 @@ void GCApplication::showImage() const{
     }
 
     imshow( *winName, res );
-    imwrite("SegmentedImages/seg0001.jpg", res);
+    imwrite("../SegmentedImages/seg0001.jpg", res);
 }
 
 void GCApplication::setRectInMask(){
@@ -309,7 +310,7 @@ int PriorSegmentation(std::string filename){
         }
     }
 
-exit_main:
+    exit_main:
     destroyWindow( winName );
     return 1;
 }

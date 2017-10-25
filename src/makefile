@@ -8,7 +8,7 @@ LIBS = `pkg-config opencv --libs`
 
 
 
-_OBJ = main.o grabcut.o
+_OBJ = main.o grabcut.o distTransform.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 $(ODIR)/%.o: %.cpp ;
