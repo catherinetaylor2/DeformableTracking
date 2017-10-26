@@ -4,13 +4,10 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/imgproc.hpp"
 #include <segmentation.h>
-
 #include <iostream>
 
-
-//using namespace std;
 using namespace cv;
-
+Mat res;
 static void help()
 {
     std::cout << "\nThis program demonstrates GrabCut segmentation -- select an object in a region\n"
@@ -21,6 +18,7 @@ static void help()
         "\nHot keys: \n"
         "\tESC - quit the program\n"
         "\tr - restore the original image\n"
+        "\ts - save image \n"
         "\tn - next iteration\n"
         "\n"
         "\tleft mouse button - set rectangle\n"
@@ -103,7 +101,7 @@ void GCApplication::setImageAndWinName( const Mat& _image, const std::string& _w
 void GCApplication::showImage() const{
     if( image->empty() || winName->empty() ) //end if image or window are empty
         return;
-    Mat res;
+    res.release(); //clears res matrix
     Mat binMask;
     if( !isInitialized ) //not initilised then copy image to new Mat
         image->copyTo( res );
@@ -134,9 +132,7 @@ void GCApplication::showImage() const{
             }
         }
     }
-
     imshow( *winName, res );
-    imwrite("../SegmentedImages/seg0001.jpg", res);
 }
 
 void GCApplication::setRectInMask(){
@@ -284,6 +280,7 @@ int PriorSegmentation(std::string filename){
 
     gcapp.setImageAndWinName( image, winName );
     gcapp.showImage();
+    std::string outputName = "../SegmentedImages/seg" + filename.substr(15,18);
 
     for(;;){
         char c = (char)waitKey(0);
@@ -295,6 +292,10 @@ int PriorSegmentation(std::string filename){
                 std::cout << std::endl;
                 gcapp.reset();
                 gcapp.showImage();
+                break;
+            case 's':
+                std::cout << "saving image \n";
+                imwrite(outputName, res);
                 break;
             case 'n': //if n pressed move on to next iteration
                 int iterCount = gcapp.getIterCount();
