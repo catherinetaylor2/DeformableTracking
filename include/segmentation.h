@@ -5,4 +5,5 @@
 #include <iostream>
 
 int PriorSegmentation(std::string filename);
-int SegmentImage(std::string filename);
+//int SegmentImage(std::string distMapName, std::string imageName);
+int SegmentImage(std::string Prevfilename, std::string filename);

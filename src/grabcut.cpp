@@ -59,6 +59,8 @@ public:
     void mouseClick( int event, int x, int y, int flags, void* param );
     int nextIter();
     int getIterCount() const { return iterCount; }
+    int segmentImage(std::string distMapName, std::string imageName);
+    Mat bgdModel, fgdModel; 
 private:
     void setRectInMask();
     void setLblsInMask( int flags, Point p, bool isPr );
@@ -66,7 +68,7 @@ private:
     const std::string* winName;
     const Mat* image;
     Mat mask;
-    Mat bgdModel, fgdModel; //matrices used within algorithm internally
+   //matrices used within algorithm internally
 
     uchar rectState, lblsState, prLblsState;
     bool isInitialized;
@@ -123,14 +125,20 @@ void GCApplication::showImage() const{
     if( rectState == IN_PROCESS ) //display rectangle
         rectangle( res, Point( rect.x, rect.y ), Point(rect.x + rect.width, rect.y + rect.height ), GREEN, 2);
 
-    for( int x = 0; x < res.rows; x++ ) {
-        for( int y = 0; y < res.cols; y++ ) {
-            if ( res.at<Vec3b>(x, y) == Vec3b(0,0,0 )) {
-                res.at<Vec3b>(x, y)[0] = 255;
-                res.at<Vec3b>(x, y)[1] = 255;
-                res.at<Vec3b>(x, y)[2] = 255;
-            }
-        }
+    // for( int x = 0; x < res.rows; x++ ) {
+    //     for( int y = 0; y < res.cols; y++ ) {
+    //         if ( res.at<Vec3b>(x, y) == Vec3b(0,0,0 )) {
+    //             res.at<Vec3b>(x, y)[0] = 255;
+    //             res.at<Vec3b>(x, y)[1] = 255;
+    //             res.at<Vec3b>(x, y)[2] = 255;
+    //         }
+    //     }
+    // }
+    {
+    FileStorage fs("mymodels.yml", FileStorage::WRITE);
+    fs << "BgdModel" <<bgdModel;
+    fs << "FgdModel" << fgdModel;
+    
     }
     imshow( *winName, res );
 }
@@ -254,6 +262,7 @@ int GCApplication::nextIter(){
 
     return iterCount;
 }
+
 
 GCApplication gcapp;
 

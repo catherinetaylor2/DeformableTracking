@@ -15,7 +15,7 @@ $(ODIR)/%.o: %.cpp ;
 	$(CC) -c -o $@ $< $(CFLAGS) 
 
 
-Deform: $(OBJ) ;
+run: $(OBJ) ;
 	clang++ -o $@ $^ $(CFLAGS) $(LIBS)
 
 # .PHONY: clean

@@ -3,6 +3,10 @@
 #include <iostream>
 #include <segmentation.h>
 
+using namespace cv;
+Mat bgdModel, fgdModel; 
+
+
 int main(){
 
    int priorSegementation =  PriorSegmentation("../Frames/frame0001.jpg");
@@ -11,11 +15,12 @@ int main(){
        return -1;
     }
 
-   int segmentImage = SegmentImage("../SegmentedImages/seg0001.jpg");
-   if(segmentImage == -1){
+   int distFun = SegmentImage("../SegmentedImages/seg0001.jpg", "../Frames/frame0002.jpg");
+   if(distFun == -1){
        std::cerr<<"Error: Segmentation has failed on frame "<< 1 << "\n";
    }
 
+  // int s = SegmentImage("../Masks/mask0001.jpg","../Frames/frame0002.jpg");
 
     return 0;
 }
