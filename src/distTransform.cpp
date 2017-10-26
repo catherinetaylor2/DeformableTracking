@@ -23,17 +23,18 @@ int SegmentImage(std::string PrevSeg, std::string filename){
   
     Mat dist, bw;
     cvtColor(image, bw, CV_BGR2GRAY);
-    threshold(bw, bw, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
+    bw = bw >0;
+    //threshold(bw, bw, 255, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
 
  distanceTransform(bw, dist, DIST_L2, 3); //apply distance transfrom
- normalize(dist, dist, 0, 1., NORM_MINMAX);
+normalize(dist, dist, 0, 1., NORM_MINMAX);
 
     for(int x = 0; x<dist.rows; x++){
         for (int y =0; y<dist.cols; y++){
            if(dist.at<float>(x, y)<(0.000001)){
                dist.at<float>(x, y)= 0.0f;
             }
-            else if(dist.at<float>(x, y)>(0.05)){
+            else if(dist.at<float>(x, y)>(0.1)){
                 dist.at<float>(x, y)= 1.0f;
             }
             else{
@@ -74,7 +75,7 @@ int SegmentImage(std::string PrevSeg, std::string filename){
     namedWindow("myWindow", WINDOW_AUTOSIZE);
     char exit_key_press = 0;
     do {
-        imshow("myWindow", img);
+        imshow("myWindow", dist);
         exit_key_press = cvWaitKey(1);
     }while (exit_key_press != '\x1b');
 
