@@ -10,31 +10,30 @@ using namespace cv;
 float thresh = 0.1f;
 
 int SegmentImage(std::string PrevSeg, std::string filename){
-   // std::string filename;
-   // filename = "SegmentedImages/seg0001.jpg";
-    if(PrevSeg.empty()){
+    if(PrevSeg.empty()||filename.empty()){
         std::cerr<<"Error:no such file \n";
         return -1;
     }
     Mat image = imread( PrevSeg, 1 );
-    if(image.empty()){
+    Mat image2 = imread( filename, 1 );
+    if(image.empty()||image2.empty()){
         std::cerr<<"Error: cannot open image \n";
         return -1;
     }
   
     Mat dist, bw;
     cvtColor(image, bw, CV_BGR2GRAY);
-    threshold(bw, bw, 10, 100, CV_THRESH_BINARY | CV_THRESH_OTSU);
+    threshold(bw, bw, 0, 255, CV_THRESH_BINARY | CV_THRESH_OTSU);
 
-  distanceTransform(bw, dist, DIST_L2, 3); //apply distance transfrom
-  normalize(dist, dist, 0, 1., NORM_MINMAX);
+ distanceTransform(bw, dist, DIST_L2, 3); //apply distance transfrom
+ normalize(dist, dist, 0, 1., NORM_MINMAX);
 
     for(int x = 0; x<dist.rows; x++){
         for (int y =0; y<dist.cols; y++){
            if(dist.at<float>(x, y)<(0.000001)){
                dist.at<float>(x, y)= 0.0f;
             }
-            else if(dist.at<float>(x, y)>(0.1)){
+            else if(dist.at<float>(x, y)>(0.05)){
                 dist.at<float>(x, y)= 1.0f;
             }
             else{
@@ -43,9 +42,6 @@ int SegmentImage(std::string PrevSeg, std::string filename){
         }
        
     }
-
-    //std::string filename = "../Frames/frame0002.jpg";
-    Mat image2 = imread( filename, 1 );
     Mat bgdModel, fgdModel, img, m; 
     
     {
