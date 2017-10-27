@@ -15,7 +15,8 @@ int main(){
        return -1;
     }
 
-    for(int i =0; i<1; ++i){
+    for(int i =0; i<21; ++i){
+        std::cout<<"frame "<<i<<"\n";
         std::string j, jPrev;
         if(i < 10){
             jPrev = "000" + std::to_string(i);
