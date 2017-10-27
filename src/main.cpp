@@ -9,18 +9,32 @@ Mat bgdModel, fgdModel;
 
 int main(){
 
-   int priorSegementation =  PriorSegmentation("../Frames/frame0001.jpg");
+   int priorSegementation =  PriorSegmentation("../Frames/0000.png");
    if(priorSegementation == -1){
        std::cerr<<"Error: Prior Segmentation has failed \n";
        return -1;
     }
 
-   int distFun = SegmentImage("../SegmentedImages/seg0001.jpg", "../Frames/frame0002.jpg");
-   if(distFun == -1){
-       std::cerr<<"Error: Segmentation has failed on frame "<< 1 << "\n";
-   }
-
-  // int s = SegmentImage("../Masks/mask0001.jpg","../Frames/frame0002.jpg");
+    for(int i =0; i<1; ++i){
+        std::string j, jPrev;
+        if(i < 10){
+            jPrev = "000" + std::to_string(i);
+        }
+        else if(i>=10&&i<100){
+            jPrev = "00" + std::to_string(i);
+        }
+        if((i+1) < 10){
+            j = "000" + std::to_string(i+1);
+        }
+        else if((i+1)>=10&&(i+1)<100){
+            j = "00" + std::to_string(i+1);
+        }
+       // std::cout<<"../SegmentedImages/" + jPrev +"png"<<"\n";
+        int distFun = SegmentImage("../SegmentedImages/" + jPrev +".png", "../Frames/" + j +".png");
+        if(distFun == -1){
+            std::cerr<<"Error: Segmentation has failed on frame "<< i << "\n";
+        }
+    }
 
     return 0;
 }

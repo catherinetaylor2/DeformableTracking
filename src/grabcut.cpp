@@ -125,15 +125,15 @@ void GCApplication::showImage() const{
     if( rectState == IN_PROCESS ) //display rectangle
         rectangle( res, Point( rect.x, rect.y ), Point(rect.x + rect.width, rect.y + rect.height ), GREEN, 2);
 
-    // for( int x = 0; x < res.rows; x++ ) {
-    //     for( int y = 0; y < res.cols; y++ ) {
-    //         if ( res.at<Vec3b>(x, y) == Vec3b(0,0,0 )) {
-    //             res.at<Vec3b>(x, y)[0] = 255;
-    //             res.at<Vec3b>(x, y)[1] = 255;
-    //             res.at<Vec3b>(x, y)[2] = 255;
-    //         }
-    //     }
-    // }
+    for( int x = 0; x < res.rows; x++ ) {
+        for( int y = 0; y < res.cols; y++ ) {
+            if ( res.at<Vec3b>(x, y) == Vec3b(0,0,0 )) {
+                res.at<Vec3b>(x, y)[0] = 255;
+                res.at<Vec3b>(x, y)[1] = 255;
+                res.at<Vec3b>(x, y)[2] = 255;
+            }
+        }
+    }
     {
     FileStorage fs("mymodels.yml", FileStorage::WRITE);
     fs << "BgdModel" <<bgdModel;
@@ -272,12 +272,12 @@ static void on_mouse( int event, int x, int y, int flags, void* param ){ //flags
 
 int PriorSegmentation(std::string filename){
     if(filename.empty()){
-        std::cerr<<"Error: no such file \n";
+        std::cerr<<"Error: no such file in prior segmentation \n";
         return -1;
     }
     Mat image = imread( filename, 1 );
     if(image.empty()){
-        std::cerr<<"Error: cannot open image \n";
+        std::cerr<<"Error: cannot open image in prior segmentation \n";
         return -1;
     }
     help(); //displays usage terms
@@ -289,7 +289,7 @@ int PriorSegmentation(std::string filename){
 
     gcapp.setImageAndWinName( image, winName );
     gcapp.showImage();
-    std::string outputName = "../SegmentedImages/seg" + filename.substr(15,18);
+    std::string outputName = "../SegmentedImages/" + filename.substr(10,18);
 
     for(;;){
         char c = (char)waitKey(0);
