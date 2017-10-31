@@ -1,0 +1,22 @@
+{
+    "version": "0.1.0",
+
+    "tasks": [
+        {
+            "taskName": "build hello world",
+            "command": "make",
+            "isShellCommand": true,
+            "isBuildCommand": true,
+    // compiles and links with debugger information
+            "args": [],
+    // without debugger information
+    // "args": ["-o", "hello.exe", "hello.cpp"],
+            "showOutput": "always"
+        }
+    ],
+    "group": {
+        "kind": "build",
+        "isDefault": true
+       // "isBuildCommand": true,
+    }
+}

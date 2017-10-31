@@ -1,0 +1,13 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+   
+    "version": "0.1.0",
+    "command": "clang++",
+    "isShellCommand": true,
+    // compiles and links with debugger information
+    "args": ["-g", "makefile"],
+    // without debugger information
+    // "args": ["-o", "hello.exe", "hello.cpp"],
+    "showOutput": "always"
+}
