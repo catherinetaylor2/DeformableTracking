@@ -37,7 +37,7 @@ int main(){
 //             std::cerr<<"Error: Segmentation has failed on frame "<< i << "\n";
 //         }
  //}
-    getPointCloud("../SegmentedDepth/0001.yml");
+ getPointCloud("../SegmentedDepth/0001.yml");
 
     return 0;
 }

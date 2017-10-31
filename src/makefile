@@ -7,7 +7,7 @@ LIBS = `pkg-config opencv --libs` -L/usr/local/lib/ -L/usr/lib/x86_64-linux-gnu/
 
 
 
-_OBJ = main.o grabcut.o distTransform.o calibration.o pointcloud.o
+_OBJ = main.o grabcut.o distTransform.o pointcloud.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 $(ODIR)/%.o: %.cpp ;
