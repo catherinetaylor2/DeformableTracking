@@ -3,7 +3,7 @@ CC = clang++ -std=c++11
 CFLAGS = $(IDIR) `pkg-config opencv --cflags`  `pkg-config eigen3 --cflags --libs`
 ODIR = obj
 
-LIBS = `pkg-config opencv --libs` -L/usr/local/lib/ -L/usr/lib/x86_64-linux-gnu/ -lboost_filesystem -lboost_system -lpcl_visualization
+LIBS = `pkg-config opencv --libs` -L/usr/local/lib/ -L/usr/lib/x86_64-linux-gnu/ -lboost_filesystem -lboost_system -lboost_thread -lpcl_visualization -lpcl_io
 
 
 

@@ -58,22 +58,22 @@ int SegmentImage(std::string PrevSeg, std::string filename, std::string depthNam
         }
     }
 
-//     double minVal; double maxVal;
-//     minMaxLoc( raw_dist, &minVal, &maxVal, 0, 0, Mat() );
-//     minVal = abs(minVal); maxVal = abs(maxVal);
-//     Mat drawing = Mat::zeros( image.size(), CV_8UC3 );
+    // double minVal; double maxVal;
+    // minMaxLoc( raw_dist, &minVal, &maxVal, 0, 0, Mat() );
+    // minVal = abs(minVal); maxVal = abs(maxVal);
+    // Mat drawing = Mat::zeros( image.size(), CV_8UC3 );
 
-//     for( int j = 0; j < image.rows; j++ )
-//        { for( int i = 0; i < image.cols; i++ )
-//             {
-//               if( raw_dist.at<float>(j,i) < 0 )
-//                 { drawing.at<Vec3b>(j,i)[0] = 255 - (int) abs(raw_dist.at<float>(j,i))*255/minVal; }
-//               else if( raw_dist.at<float>(j,i) > 0 )
-//                 { drawing.at<Vec3b>(j,i)[2] = 255 - (int) raw_dist.at<float>(j,i)*255/maxVal; }
-//               else
-//                 { drawing.at<Vec3b>(j,i)[0] = 255; drawing.at<Vec3b>(j,i)[1] = 255; drawing.at<Vec3b>(j,i)[2] = 255; }
-//             }
-//         }
+    // for( int j = 0; j < image.rows; j++ )
+    //    { for( int i = 0; i < image.cols; i++ )
+    //         {
+    //           if( raw_dist.at<float>(j,i) < 0 )
+    //             { drawing.at<Vec3b>(j,i)[0] = 255 - (int) abs(raw_dist.at<float>(j,i))*255/minVal; }
+    //           else if( raw_dist.at<float>(j,i) > 0 )
+    //             { drawing.at<Vec3b>(j,i)[2] = 255 - (int) raw_dist.at<float>(j,i)*255/maxVal; }
+    //           else
+    //             { drawing.at<Vec3b>(j,i)[0] = 255; drawing.at<Vec3b>(j,i)[1] = 255; drawing.at<Vec3b>(j,i)[2] = 255; }
+    //         }
+    //     }
 
     for(int x = 0; x<raw_dist.rows; x++){
         for (int y =0; y<raw_dist.cols; y++){
@@ -135,12 +135,12 @@ int SegmentImage(std::string PrevSeg, std::string filename, std::string depthNam
             fs << "FgdModel" << fgdModel;
             
            }
-    // namedWindow("myWindow", WINDOW_AUTOSIZE);
-    // char exit_key_press = 0;
-    // do {
-    //    imshow("myWindow", erosion_dst);
-    //     exit_key_press = cvWaitKey(1);
-    // }while (exit_key_press != '\x1b');
+    namedWindow("myWindow", WINDOW_AUTOSIZE);
+    char exit_key_press = 0;
+    do {
+       imshow("myWindow", raw_dist);
+        exit_key_press = cvWaitKey(1);
+    }while (exit_key_press != '\x1b');
 
 
     std::string outputName = "../SegmentedImages/" + filename.substr(10,18);

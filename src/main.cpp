@@ -2,7 +2,6 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
 #include <segmentation.h>
-#include <calibration.h>
 
 
 using namespace cv;
@@ -36,7 +35,7 @@ int main(){
 //         if(distFun == -1){
 //             std::cerr<<"Error: Segmentation has failed on frame "<< i << "\n";
 //         }
- //}
+//  }
  getPointCloud("../SegmentedDepth/0001.yml");
 
     return 0;
