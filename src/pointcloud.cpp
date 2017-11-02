@@ -12,7 +12,10 @@
 #include <pcl/io/vtk_lib_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/common/transforms.h>
 #include <ros/ros.h>
+#include <pcl/conversions.h>
 
 using namespace cv;
 
@@ -21,21 +24,21 @@ using namespace cv;
 
 void getPointCloud(std::string DepthMap){
 
-    // transMatrix2D K;
-    // transMatrix3D L;
+    transMatrix2D K;
+    transMatrix3D L;
 
-    // K(0,0) = 525.0f;
-    // K(0,2) = 319.5f;
-    // K(1,1) = 525.0f;
-    // K(1,2) = 239.5f;
-    // K(2,2) = 1.0f;
+    K(0,0) = 525.0f;
+    K(0,2) = 319.5f;
+    K(1,1) = 525.0f;
+    K(1,2) = 239.5f;
+    K(2,2) = 1.0f;
 
-    // L<<1,0,0,0,
-    //     0,1,0,0,
-    //     0,0,1,0,
-    //     0,0,0,1;
+    L<<1,0,0,0,
+        0,1,0,0,
+        0,0,1,0,
+        0,0,0,1;
 
-    // Calibration calibration(K, L);
+    Calibration calibration(K, L);
 
     // std::cout<<"K "<<L<<"\n";
 
@@ -57,7 +60,7 @@ void getPointCloud(std::string DepthMap){
     //     for(int i = 0; i< depthMat.rows; ++i){
     //         for( int j = 0; j< depthMat.cols; ++j){
     //             if(depthMat.at<ushort>(i,j)!=0){
-    //                 uv<<j,i,1;
+    //                 uv<<i, j,1;
     //                 xyz = calibration.Unproject(uv);
                     
                    
@@ -65,6 +68,7 @@ void getPointCloud(std::string DepthMap){
     //                 // uv.at<double>(1,0) = j;
     //                 // xyz = invProj*uv;
     //                 xyz *= 1.0f/xyz(2)*depthMat.at<ushort>(i,j);
+    //                 std::cout<<"xyz "<<xyz<<"\n";
     //                 (*cloud)[depthMat.rows*j + i].x=xyz(0);
     //                 (*cloud)[depthMat.rows*j + i].y=xyz(1);
     //                 (*cloud)[depthMat.rows*j + i].z=xyz(2);
@@ -88,11 +92,40 @@ void getPointCloud(std::string DepthMap){
     //     }
     pcl::PolygonMesh mesh;
     pcl::io::loadPolygonFileOBJ("../pipe.obj",mesh);
+    std::cout<<"mesh size "<<mesh.polygons.size()<<"\n";
 
     pcl::PointCloud<pcl::PointXYZ> cloud;
-    pcl::fromROSMsg(mesh.cloud, cloud);
-    std::cout<<"mesh "<<cloud.points[ mesh.polygons[0].vertices[0] ]<<"\n";
+    pcl::fromPCLPointCloud2(mesh.cloud, cloud);
+    std::cout<<"mesh "<<cloud.points[ mesh.polygons[0].vertices[0]].x<<"\n";
+
+    hVec3D X;
+    hVec2D x;
+  Mat depthMap = Mat::zeros(480, 640, CV_64F);
+    for (int i=0; i<mesh.polygons.size(); ++i){
+        for(int j=0; j<3; ++j){
+            X(0) = cloud.points[ mesh.polygons[i].vertices[j]].x;
+            X(1) = cloud.points[ mesh.polygons[i].vertices[j]].y + 200;
+            X(2) = cloud.points[ mesh.polygons[i].vertices[j]].z + 400;
+            X(3) = 1;
+            x = calibration.Project(X);
+           // std::cout<<"x "<<X<<"\n";
+            if(x(0)<480 && x(1)<640){
+                if(depthMap.at<float>(x(0), x(1))!= 0){
+                    if(X(2) > depthMap.at<float>((int)x(0), (int)x(1))){
+                        depthMap.at<float>((int)x(0), (int)x(1)) = X(2);
+                        std::cout<< X(2)<< " "<< depthMap.at<float>((int)x(0), (int)x(1))<<"\n";
+                    }
+                }
+                else{
+                    depthMap.at<float>((int)x(0), (int)x(1)) = X(2);
+                }
+            }
+        }
+
+    }
     
+
+
     
     // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
     // viewer->setBackgroundColor (0, 0, 0);
@@ -103,6 +136,16 @@ void getPointCloud(std::string DepthMap){
     //     viewer->spinOnce (100);
     //     boost::this_thread::sleep (boost::posix_time::microseconds (100000));
     // }
+
+    FileStorage fs2("../DEPTHMAP", FileStorage::WRITE);
+    fs2 << "depth" <<depthMap;
+   depthMap = depthMap!=0;
+    namedWindow("myWindow", WINDOW_AUTOSIZE);
+    char exit_key_press = 0;
+    do {
+     imshow("myWindow", depthMap);
+        exit_key_press = cvWaitKey(1);
+    }while (exit_key_press != '\x1b');
 
   
 }
