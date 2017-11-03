@@ -42,12 +42,12 @@ void getPointCloud(std::string DepthMap){
 
     // std::cout<<"K "<<L<<"\n";
 
-    //  Mat depthMat;
-    // FileStorage fs(DepthMap, FileStorage::READ);
-    // fs["depth"] >> depthMat;
+     Mat depthMat;
+    FileStorage fs(DepthMap, FileStorage::READ);
+    fs["depth"] >> depthMat;
 
-    // hVec2D uv ;
-    // hVec3D xyz;
+    hVec2D uv ;
+    hVec3D xyz;
 
     // Mat PointCloud(depthMat.rows, depthMat.cols, CV_64FC3);
 
@@ -64,11 +64,13 @@ void getPointCloud(std::string DepthMap){
     //                 xyz = calibration.Unproject(uv);
                     
                    
-    //                 // uv.at<double>(0,0) = i;
-    //                 // uv.at<double>(1,0) = j;
-    //                 // xyz = invProj*uv;
+    //                 uv.at<double>(0,0) = i;
+    //                 uv.at<double>(1,0) = j;
+    //                 xyz = invProj*uv;
     //                 xyz *= 1.0f/xyz(2)*depthMat.at<ushort>(i,j);
-    //                 std::cout<<"xyz "<<xyz<<"\n";
+    //                 if(xyz(0)>0){
+    //                     std::cout<<"xyz "<<xyz<<"\n";
+    //                 }
     //                 (*cloud)[depthMat.rows*j + i].x=xyz(0);
     //                 (*cloud)[depthMat.rows*j + i].y=xyz(1);
     //                 (*cloud)[depthMat.rows*j + i].z=xyz(2);
@@ -100,7 +102,8 @@ void getPointCloud(std::string DepthMap){
 
     hVec3D X;
     hVec2D x;
-  Mat depthMap = Mat::zeros(480, 640, CV_64F);
+  Mat depthMap = Mat::zeros(1000, 1000, CV_64F);
+  std::vector<int> visible_indices;
     for (int i=0; i<mesh.polygons.size(); ++i){
         for(int j=0; j<3; ++j){
             X(0) = cloud.points[ mesh.polygons[i].vertices[j]].x;
@@ -109,11 +112,10 @@ void getPointCloud(std::string DepthMap){
             X(3) = 1;
             x = calibration.Project(X);
            // std::cout<<"x "<<X<<"\n";
-            if(x(0)<480 && x(1)<640){
-                if(depthMap.at<float>(x(0), x(1))!= 0){
+            if(x(0)<1000 && x(1)<1000){
+                if(depthMap.at<float>((int)x(0), (int)x(1))!= 0){
                     if(X(2) > depthMap.at<float>((int)x(0), (int)x(1))){
                         depthMap.at<float>((int)x(0), (int)x(1)) = X(2);
-                        std::cout<< X(2)<< " "<< depthMap.at<float>((int)x(0), (int)x(1))<<"\n";
                     }
                 }
                 else{
@@ -127,15 +129,15 @@ void getPointCloud(std::string DepthMap){
 
 
     
-    // boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
-    // viewer->setBackgroundColor (0, 0, 0);
-    // viewer->addPolygonMesh(mesh,"meshes",0);
-    // viewer->addCoordinateSystem (1.0);
-    // viewer->initCameraParameters ();
-    // while (!viewer->wasStopped ()){
-    //     viewer->spinOnce (100);
-    //     boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-    // }
+    boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+    viewer->setBackgroundColor (0, 0, 0);
+    viewer->addPolygonMesh(mesh,"meshes",0);
+    viewer->addCoordinateSystem (1.0);
+    viewer->initCameraParameters ();
+    while (!viewer->wasStopped ()){
+        viewer->spinOnce (100);
+        boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+    }
 
     FileStorage fs2("../DEPTHMAP", FileStorage::WRITE);
     fs2 << "depth" <<depthMap;
