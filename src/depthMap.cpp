@@ -5,6 +5,24 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/glm.hpp>
 #include "shader.hpp"
+#include <vector>
+#include "math/mathTypes.h"
+#include <calib/calibration.h>
+#include <calib/calibration.cpp>
+#include <pcl-1.8/pcl/visualization/cloud_viewer.h>
+#include <pcl/io/io.h>
+#include <pcl/io/pcd_io.h>
+#include <pcl/io/vtk_lib_io.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/common/transforms.h>
+#include <ros/ros.h>
+#include <pcl/conversions.h>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/imgproc.hpp"
+
 
 int main(){
 
@@ -72,7 +90,6 @@ int main(){
         return -1;
     } 
 
-
     GLuint puppet_vertexbuffer;
     glGenBuffers(1, &puppet_vertexbuffer);
     glBindBuffer(GL_ARRAY_BUFFER, puppet_vertexbuffer);
@@ -90,10 +107,8 @@ int main(){
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 3*NumberOfFaces*sizeof(unsigned int), indices, GL_DYNAMIC_DRAW); 
 
-    GLuint programID = LoadShaders("VertexShader.glsl", "FragmentShader.glsl");
+    GLuint programID = LoadShaders("shaders/VertexShader.glsl", "shaders/FragmentShader.glsl");
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
-
-
 
 
     //do{// glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -125,10 +140,40 @@ int main(){
         glfwPollEvents();
         
   //}while(glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS && glfwWindowShouldClose(window)==0);
+
+
+//   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
+//   cloud->width    = width;
+//   cloud->height   = height;
+//   cloud->is_dense = false;
+//   cloud->points.resize (cloud->width * cloud->height);
     
-  
+    std::vector<int> vis;
+    for(int i = 0; i< NumberOfVertices; ++i){
+        glm::vec4 V(Vertices[3*i],Vertices[3*i+1],Vertices[3*i+2],1);
+        glm::vec3 v = MVP*V;
+        int vx = (v.x + 1)*width/2.0f;
+        int vy = (v.y +1)*height/2.0f;
+
+        if(v.z<=pixels[vx + width*(vy)]){ //hmmmm?
+            // (*cloud)[vx + width*vy].x=Vertices[3*i];
+            // (*cloud)[vx + width*vy].y=Vertices[3*i+1];
+            // (*cloud)[vx + width*vy].z=Vertices[3*i+2];
+            // (*cloud)[vx + width*vy].r=255;
+            // (*cloud)[vx + width*vy].g=255;
+            // (*cloud)[vx + width*vy].b=255;
+            vis.push_back(i);
+        }
+    }
+    std::cout<<vis.size()<<"\n";
 
     ObjFile::cleanUp(Vertices,Normals, Textures, FaceVertices, FaceNormals, FaceTextures);
     glDeleteBuffers(1, &textureID);
     glDeleteFramebuffers(1, &framebuffer); 
+    //    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
+    //    viewer.showCloud (cloud);
+      
+    //     while (!viewer.wasStopped ())
+    //    {
+    //     }
 }

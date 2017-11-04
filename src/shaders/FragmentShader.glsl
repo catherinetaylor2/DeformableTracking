@@ -12,6 +12,6 @@ void main(){
     gl_FragDepth = gl_FragCoord.z;
     float z_n = (2.0f *  gl_FragDepth) - 1.0f;
     
-    z_e = 2.0 * zNear * zFar / (zFar + zNear - z_n * (zFar - zNear));
+    z_e = z_b ;//2.0 * zNear * zFar / (zFar + zNear - z_n * (zFar - zNear));
      
 }
