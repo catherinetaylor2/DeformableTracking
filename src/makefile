@@ -7,7 +7,7 @@ LIBS = `pkg-config opencv --libs` -L/usr/local/lib/ -lGLEW -lglfw -lGL -L/usr/li
 
 
 
-_OBJ =  depthMap.o ReadObj.o shader.o
+_OBJ =  main.o ReadObj.o shader.o pointcloud.o depthMap.o distTransform.o grabcut.o
 OBJ = $(patsubst %, $(ODIR)/%, $(_OBJ))
 
 $(ODIR)/%.o: %.cpp ;

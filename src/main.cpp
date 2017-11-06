@@ -2,6 +2,8 @@
 #include "opencv2/imgproc/imgproc.hpp"
 #include <iostream>
 #include <segmentation.h>
+#include <vector>
+//#include "math/mathTypes.h"
 
 
 using namespace cv;
@@ -36,7 +38,10 @@ int main(){
 //             std::cerr<<"Error: Segmentation has failed on frame "<< i << "\n";
 //         }
 //  }
- getPointCloud("../SegmentedDepth/0001.yml");
+
+
+    std::vector<hVec3D> pointCloud =  getPointCloud("../SegmentedDepth/0001.yml");
+    int i = getDepthMap(pointCloud);
 
     return 0;
 }

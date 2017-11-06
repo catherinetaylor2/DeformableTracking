@@ -36,6 +36,8 @@
         "algorithm": "cpp",
         "iostream": "cpp",
         "*.ipp": "cpp",
-        "future": "cpp"
+        "future": "cpp",
+        "core": "cpp",
+        "cwctype": "cpp"
     }
 }

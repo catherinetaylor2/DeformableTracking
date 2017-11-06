@@ -6,25 +6,11 @@
 #include <glm/glm.hpp>
 #include "shader.hpp"
 #include <vector>
-#include "math/mathTypes.h"
-#include <calib/calibration.h>
-#include <calib/calibration.cpp>
-#include <pcl-1.8/pcl/visualization/cloud_viewer.h>
-#include <pcl/io/io.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/io/vtk_lib_io.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/common/transforms.h>
-#include <ros/ros.h>
-#include <pcl/conversions.h>
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/imgproc.hpp"
+#include <segmentation.h>
+#include <nanoflann.hpp>
+#include <Eigen/Dense>
 
-
-int main(){
+int getDepthMap(std::vector<hVec3D> PointCloud){
 
     float *Vertices, *Normals, *Textures; 
     int NumberOfFaces, *FaceVertices, *FaceNormals, *FaceTextures, NumberOfVertices;
@@ -140,29 +126,19 @@ int main(){
         glfwPollEvents();
         
   //}while(glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS && glfwWindowShouldClose(window)==0);
-
-
-//   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZRGBA>);
-//   cloud->width    = width;
-//   cloud->height   = height;
-//   cloud->is_dense = false;
-//   cloud->points.resize (cloud->width * cloud->height);
     
     std::vector<int> vis;
+    std::vector<hVec3D> VisPoints;
+    hVec3D xyz;
     for(int i = 0; i< NumberOfVertices; ++i){
         glm::vec4 V(Vertices[3*i],Vertices[3*i+1],Vertices[3*i+2],1);
         glm::vec3 v = MVP*V;
         int vx = (v.x + 1)*width/2.0f;
         int vy = (v.y +1)*height/2.0f;
-
-        if(v.z<=pixels[vx + width*(vy)]){ //hmmmm?
-            // (*cloud)[vx + width*vy].x=Vertices[3*i];
-            // (*cloud)[vx + width*vy].y=Vertices[3*i+1];
-            // (*cloud)[vx + width*vy].z=Vertices[3*i+2];
-            // (*cloud)[vx + width*vy].r=255;
-            // (*cloud)[vx + width*vy].g=255;
-            // (*cloud)[vx + width*vy].b=255;
+        xyz << V.x, V.y, V.z, 1;
+        if(v.z<=pixels[vx + width*(vy)]){ 
             vis.push_back(i);
+            VisPoints.push_back(xyz);
         }
     }
     std::cout<<vis.size()<<"\n";
@@ -170,10 +146,103 @@ int main(){
     ObjFile::cleanUp(Vertices,Normals, Textures, FaceVertices, FaceNormals, FaceTextures);
     glDeleteBuffers(1, &textureID);
     glDeleteFramebuffers(1, &framebuffer); 
-    //    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
-    //    viewer.showCloud (cloud);
-      
-    //     while (!viewer.wasStopped ())
-    //    {
-    //     }
+
+    //--------------------------------------------------------------------
+    //ICP:
+
+    //calculate centre of mass
+
+   // float mPointCloud = 0.0f , mMesh = 0.0f;
+   hVec3D mMesh;
+   mMesh <<0.0f, 0.0f, 0.0f,0.0f;
+    for(int i = 0; i<VisPoints.size(); ++i){
+        mMesh += VisPoints[i];
+    }
+    mMesh *= 1.0f/VisPoints.size();
+
+    hVec3D mPointCloud;
+    mPointCloud <<0.0f, 0.0f, 0.0f,0.0f;
+    for(int i = 0; i<PointCloud.size(); ++i){
+        mPointCloud += PointCloud[i];
+    }
+    mPointCloud *= 1.0f/PointCloud.size();
+
+    Eigen::MatrixXf mM(3,1), mP(3,1);
+    mM<<mMesh[0], mMesh[1], mMesh[2];
+    mP<<mPointCloud[0], mPointCloud[1], mPointCloud[2];
+
+
+
+    //get new point sets
+
+    std::vector<hVec3D> meshPoints;
+    std::vector<hVec3D> cloudPoints;
+    hVec3D currentPoint;
+
+    for(int i = 0; i< VisPoints.size(); ++i){
+        currentPoint = VisPoints[i] - mMesh;
+        meshPoints.push_back(currentPoint);
+    }
+    Eigen::MatrixXf ePointCloud(PointCloud.size(), 3);    
+    for(int i = 0; i< PointCloud.size(); ++i){
+        currentPoint = PointCloud[i] - mPointCloud;
+        cloudPoints.push_back(currentPoint);
+        ePointCloud.row(i)<<currentPoint(0),currentPoint(1),currentPoint(2);
+    }
+
+    //make eigen filled with point cloud
+
+    typedef nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf> KDTree;
+    
+    KDTree PointCloudTree(3, ePointCloud, 10);
+    PointCloudTree.index->buildIndex();
+    std::vector<std::pair<int, int>> pairs;
+    
+    for(int i = 0; i < VisPoints.size(); ++i){
+        std::vector<size_t> ret_indexes(1);
+        std::vector<float>  out_dists_sqr(1);
+        nanoflann::KNNResultSet<float> resultSet(1);
+        resultSet.init(&ret_indexes[0], &out_dists_sqr[0] );
+        std::vector<float> q(3); 
+        q[0] = (meshPoints[i])(0);
+        q[1] = (meshPoints[i])(1);
+        q[2] = (meshPoints[i])(2);
+        
+        
+        PointCloudTree.index->findNeighbors(resultSet, &q[0], nanoflann::SearchParams(10));
+        std::pair<int,int> currentPair;
+        currentPair.first = i;
+        currentPair.second = ret_indexes[0];
+        pairs.push_back(currentPair);
+    }
+
+
+    Eigen::MatrixXf xi(3,1), pi(3,1), U(3,3), VT(3,3), R, t;
+    Eigen::MatrixXf  W = Eigen::MatrixXf::Zero(3,3);
+    Eigen::MatrixXf  D = Eigen::MatrixXf::Zero(3,3);
+
+    for(int i =0; i< VisPoints.size(); ++i){
+        int  meshIndex = pairs[i].first;
+        int cloudIndex = pairs[i].second;
+        //std::cout<<"mesh "<<meshIndex<<" cloud "<<cloudIndex<<"\n";
+        xi<<meshPoints[meshIndex](0), meshPoints[meshIndex](1), meshPoints[meshIndex](2);
+        pi<<cloudPoints[cloudIndex](0),cloudPoints[cloudIndex](1), cloudPoints[cloudIndex](2);
+        W += xi*pi.transpose();
+    }
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(W, Eigen::ComputeFullU | Eigen::ComputeFullV);
+    D(0,0) = svd.singularValues()(0,0);
+    D(1,1) = svd.singularValues()(1,0);
+    D(2,2) = svd.singularValues()(2,0);
+    U = svd.matrixU();
+    VT = svd.matrixV().transpose();
+   
+    R = U*VT;
+    t = mP - R*mM;
+
+    for(int i=0; i<VisPoints.size(); ++i){
+        
+    }
+
+
+        return 1;
 }
