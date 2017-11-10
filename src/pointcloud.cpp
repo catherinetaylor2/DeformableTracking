@@ -58,6 +58,7 @@ std::vector<hVec3D> getPointCloud(std::string DepthMap){
                     uv<<j,i,1;
                     xyz = calibration.Unproject(uv);
                     xyz *= 1.0f/xyz(2)*depthMat.at<ushort>(i,j);
+                    xyz(3) = 1;
                     points.push_back(xyz);
                     // (*cloud)[depthMat.rows*j + i].x=xyz(0);
                     // (*cloud)[depthMat.rows*j + i].y=xyz(1);
