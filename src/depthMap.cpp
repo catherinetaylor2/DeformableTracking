@@ -293,14 +293,28 @@ int getDepthMap(std::vector<hVec3D> PointCloud){
         xyz<<newPos(0,0), newPos(1,0), newPos(2,0),1;
         RigidPoints.push_back(xyz);
         
-        if(vx + width*vy>=0 && vx + width*vy<=width*height){
+       // if(vx + width*vy>=0 && vx + width*vy<=width*height){
             (*cloud)[vx + width*vy].x=newPos(0,0);
             (*cloud)[vx + width*vy].y=newPos(1,0);
             (*cloud)[vx + width*vy].z=newPos(2,0);
             (*cloud)[vx + width*vy].r=255;
             (*cloud)[vx + width*vy].g=255;
             (*cloud)[vx + width*vy].b=255;
-        }
+       // }
+    }
+    for(int i =0; i< PointCloud.size(); ++i){
+        glm::vec4 V(PointCloud[i](0),PointCloud[i](1),PointCloud[i](2),1);
+        glm::vec3 v = MVP*V;
+        int vx = (v.x + 1)*width/2.0f;
+        int vy = (v.y +1)*height/2.0f;
+        
+       // if(vx + width*vy>=0 && vx + width*vy<=width*height){
+            (*cloud)[vx + width*vy].x=V.x;
+            (*cloud)[vx + width*vy].y=V.y;
+            (*cloud)[vx + width*vy].z=V.z;
+            (*cloud)[vx + width*vy].r=255;
+            (*cloud)[vx + width*vy].g=0;
+            (*cloud)[vx + width*vy].b=0;
     }
 
 
