@@ -262,7 +262,7 @@ int getDepthMap(std::vector<hVec3D> PointCloud){
         xyz << V.x, V.y, V.z, 1;
         
         if(v.z<=pixels[vx + width*(vy)]){ 
-            vis.push_back(i);
+            vis.push_back(i); //contains the index values
             VisPoints.push_back(xyz);
            
         }
@@ -294,37 +294,132 @@ int getDepthMap(std::vector<hVec3D> PointCloud){
         RigidPoints.push_back(xyz);
         
        // if(vx + width*vy>=0 && vx + width*vy<=width*height){
-            (*cloud)[vx + width*vy].x=newPos(0,0);
-            (*cloud)[vx + width*vy].y=newPos(1,0);
-            (*cloud)[vx + width*vy].z=newPos(2,0);
-            (*cloud)[vx + width*vy].r=255;
-            (*cloud)[vx + width*vy].g=255;
-            (*cloud)[vx + width*vy].b=255;
+            // (*cloud)[vx + width*vy].x=newPos(0,0);
+            // (*cloud)[vx + width*vy].y=newPos(1,0);
+            // (*cloud)[vx + width*vy].z=newPos(2,0);
+            // (*cloud)[vx + width*vy].r=255;
+            // (*cloud)[vx + width*vy].g=255;
+            // (*cloud)[vx + width*vy].b=255;
        // }
     }
-    for(int i =0; i< PointCloud.size(); ++i){
-        glm::vec4 V(PointCloud[i](0),PointCloud[i](1),PointCloud[i](2),1);
-        glm::vec3 v = MVP*V;
-        int vx = (v.x + 1)*width/2.0f;
-        int vy = (v.y +1)*height/2.0f;
+//     for(int i =0; i< PointCloud.size(); ++i){
+//         glm::vec4 V(PointCloud[i](0),PointCloud[i](1),PointCloud[i](2),1);
+//         glm::vec3 v = MVP*V;
+//         int vx = (v.x + 1)*width/2.0f;
+//         int vy = (v.y +1)*height/2.0f;
         
-       // if(vx + width*vy>=0 && vx + width*vy<=width*height){
-            (*cloud)[vx + width*vy].x=V.x;
-            (*cloud)[vx + width*vy].y=V.y;
-            (*cloud)[vx + width*vy].z=V.z;
-            (*cloud)[vx + width*vy].r=255;
-            (*cloud)[vx + width*vy].g=0;
-            (*cloud)[vx + width*vy].b=0;
-    }
+//        // if(vx + width*vy>=0 && vx + width*vy<=width*height){
+//             (*cloud)[vx + width*vy].x=V.x;
+//             (*cloud)[vx + width*vy].y=V.y;
+//             (*cloud)[vx + width*vy].z=V.z;
+//             (*cloud)[vx + width*vy].r=255;
+//             (*cloud)[vx + width*vy].g=0;
+//             (*cloud)[vx + width*vy].b=0;
+//     }
 
 
  
-   pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
-   viewer.showCloud (cloud);
+//    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
+//    viewer.showCloud (cloud);
   
-    while (!viewer.wasStopped ())
-   {
+//     while (!viewer.wasStopped ())
+//    {
+//     }
+
+    //NEAREST NEIGHBOUR CORRESPONDANCES
+    //FOR FEM MESH
+
+    Eigen::MatrixXf ePointCloud(PointCloud.size(), 3);    
+    for(int i = 0; i< PointCloud.size(); ++i){
+       ePointCloud.row(i)<<PointCloud[i](0),PointCloud[i](1),PointCloud[i](2);
     }
+
+    typedef nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf> KDTree;
+    KDTree PointCloudTree(3, ePointCloud, 10);
+    PointCloudTree.index->buildIndex();
+    std::vector<std::pair<int, int>> Meshpairs;
+    
+    for(int i = 0; i < VisPoints.size(); ++i){
+        std::vector<size_t> ret_indexes(1);
+        std::vector<float>  out_dists_sqr(1);
+        nanoflann::KNNResultSet<float> resultSet(1);
+        resultSet.init(&ret_indexes[0], &out_dists_sqr[0] );
+        std::vector<float> q(3); 
+        q[0] = (VisPoints)[i](0);
+        q[1] = (VisPoints)[i](1);
+        q[2] = (VisPoints)[i](2);        
+        
+        PointCloudTree.index->findNeighbors(resultSet, &q[0], nanoflann::SearchParams(10));
+        std::pair<int,int> currentPair;
+        currentPair.first = i;
+        currentPair.second = ret_indexes[0];
+        Meshpairs.push_back(currentPair);
+    }
+
+    //FOR POINT CLOUD
+    Eigen::MatrixXf eVisPoints(VisPoints.size(), 3);
+    for(int i =0; i< VisPoints.size(); ++i){
+        eVisPoints.row(i)<<VisPoints[i](0), VisPoints[i](1), VisPoints[i](2);
+    }
+    typedef nanoflann::KDTreeEigenMatrixAdaptor<Eigen::MatrixXf> KDTreeP;
+    KDTreeP MeshTree(3, eVisPoints, 10);
+    MeshTree.index->buildIndex();
+    std::vector<std::pair<int, int>> Cloudpairs;
+    
+    for(int i = 0; i < PointCloud.size(); ++i){
+        std::vector<size_t> ret_indexes(1);
+        std::vector<float>  out_dists_sqr(1);
+        nanoflann::KNNResultSet<float> resultSet(1);
+        resultSet.init(&ret_indexes[0], &out_dists_sqr[0] );
+        std::vector<float> q(3); 
+        q[0] = (PointCloud)[i](0);
+        q[2] = (PointCloud)[i](2);        
+        q[1] = (PointCloud)[i](1);
+        
+        MeshTree.index->findNeighbors(resultSet, &q[0], nanoflann::SearchParams(10));
+        std::pair<int,int> currentPair;
+        currentPair.first = i;
+        currentPair.second = ret_indexes[0];
+        Cloudpairs.push_back(currentPair);
+    }
+
+    //GET EXTERNAL FORCES
+
+    float lambda = 1.0f;
+    float k = 0.7f; //youngs modulous
+    int N [VisPoints.size()];
+    hVec3D Nsum [VisPoints.size()];
+    hVec3D force[NumberOfVertices];
+    std::vector<hVec3D> y;
+    hVec3D currentY;
+ //  int y[VisPoints.size()];
+    for(int i = 0; i< VisPoints.size(); ++i){
+        N[i] = 0;
+        Nsum[i]<< 0,0,0,0;
+    }
+    for(int i = 0; i<PointCloud.size(); ++i){
+        N[Cloudpairs[i].second] ++; //number of times each vis point is mapped to cloud points
+        Nsum[Cloudpairs[i].second] += PointCloud[Cloudpairs[i].second];
+    }
+
+    for (int i = 0; i<VisPoints.size(); ++i){
+        if(Nsum[i](3)>0){
+            currentY = lambda*PointCloud[Meshpairs[i].second] + (1-lambda)*1.0f/(float)N[i]*Nsum[i];
+            y.push_back(currentY);
+        }
+        else{
+           currentY = lambda*PointCloud[Meshpairs[i].second] + (1- lambda)*VisPoints[i]; 
+           y.push_back(currentY);
+        }
+    }
+    for(int i =0; i< NumberOfVertices; ++i){ // non vis points have 0 forvce
+        force[i] << 0.0f, 0.0f, 0.0f, 0.0f;
+    }
+    for (int i = 0; i<VisPoints.size(); ++i){
+        force[vis[i]] = k*(VisPoints[i] - y[i]);
+    }
+
+    //might want to discard some points
 
     ObjFile::cleanUp(Vertices,Normals, Textures, FaceVertices, FaceNormals, FaceTextures);
     glDeleteBuffers(1, &textureID);
