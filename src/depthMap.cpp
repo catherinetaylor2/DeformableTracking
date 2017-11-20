@@ -130,7 +130,7 @@ int getDepthMap(std::vector<hVec3D> PointCloud){
 
     float *Vertices, *Normals, *Textures; 
     int NumberOfFaces, *FaceVertices, *FaceNormals, *FaceTextures, NumberOfVertices;
-    ObjFile mesh("../pipe1.obj"); 
+    ObjFile mesh("../pipe.obj"); 
     if(!mesh.doesExist()){
         std::cerr<<"Error: Object file does not exist \n";
         return -1;
@@ -387,6 +387,7 @@ int getDepthMap(std::vector<hVec3D> PointCloud){
 
     float lambda = 1.0f;
     float k = 0.7f; //youngs modulous
+    float w_i = 1.0f;
     int N [VisPoints.size()];
     hVec3D Nsum [VisPoints.size()];
     hVec3D force[NumberOfVertices];
@@ -416,8 +417,73 @@ int getDepthMap(std::vector<hVec3D> PointCloud){
         force[i] << 0.0f, 0.0f, 0.0f, 0.0f;
     }
     for (int i = 0; i<VisPoints.size(); ++i){
-        force[vis[i]] = k*(VisPoints[i] - y[i]);
+        force[vis[i]] = w_i*k*(VisPoints[i] - y[i]);
     }
+
+    //ADD IN EXTRA NODE + Find volume of each tetrahedron
+    hVec2D ExtraNode[NumberOfFaces];
+    float volume;
+    float a[4], b[4], c[4], d[4], X[4], Y[4], Z[4];
+    Eigen::MatrixXf A(3,3), B(3,3), C(3,3), D(3,3), L(6, 12);
+    int index1, index2, index3, ii, jj, kk, ll;
+    float third = 1.0f/3.0f;
+    for(int i = 0; i< NumberOfFaces; ++i){
+        index1 = FaceVertices[3*i];
+        index2 = FaceVertices[3*i +1];
+        index3 = FaceVertices[3*i +2];
+
+        X[0] = Vertices[3*index1], Y[0] = Vertices[3*index1+1], Z[0] = Vertices[3*index1+2];
+        X[1]=  Vertices[3*index2], Y[1] = Vertices[3*index2+1], Z[1] = Vertices[3*index2+2];
+        X[2] = Vertices[3*index3], Y[2] = Vertices[3*index3+1], Z[2] = Vertices[3*index3+2];
+       
+        X[3] = third*(X[0]+X[1]+X[2]);
+        Y[3] = third*(Y[0]+Y[1]+Y[2]);
+        Z[3] = third*(Z[0]+Z[1]+Z[2]);
+        Z[3] += -1*Normals[3*index1+1];
+
+        volume = 1.0f/6.0f*((X[1]-X[0])*((Y[1]-Y[2])*(Z[2]-Z[3])-(Y[2]-Y[3])*(Z[1]-Z[2])) + (X[2]-X[1])*((Y[2]-Y[3])*(Z[0]-Z[1])-(Y[0]-Y[1])*(Z[2]-Z[3])) + (X[3]-X[2])*((Y[0]-Y[1])*(Z[1]-Z[2])-(Y[1]-Y[2])*(Z[0]-Z[1])));        
+
+        for(int j = 0; j<4; ++j){
+            ii = j;
+            jj = (ii + 1)*(ii <= 2);
+            kk = (jj + 1)*(jj<=2); 
+            ll = (kk + 1)*(kk<=2);
+
+            A<< X[jj], Y[jj], Z[jj],
+                X[kk], Y[kk], Z[kk],
+                X[ll], Y[ll], Z[ll];
+
+            B<< 1, Y[jj], Z[jj],
+                1, Y[kk], Z[kk],
+                1, Y[ll], Z[ll];
+
+            C<< Y[jj], 1,  Z[jj],
+                Y[kk], 1,  Z[kk],
+                Y[ll], 1,  Z[ll];
+
+            D<< Y[jj], Z[jj], 1,
+                Y[kk], Z[kk], 1,
+                Y[ll], Z[ll], 1;
+
+            a[ii] = A.determinant();
+            b[ii] = -1*B.determinant();
+            c[ii] = C.determinant();
+            d[ii] = -1*D.determinant();
+
+            L(0, 3*ii) = b[ii];
+            L(1, 3*ii + 1) = c[ii];
+            L(2, 3*ii + 2) = d[ii];
+            L(3, 3*ii) = c[ii];
+            L(4, 3*ii + 2) = c[ii];
+            L(3, 3*ii + 1) = b[ii];
+            L(5, 3*ii + 2) = b[ii];
+            L(4, 3*ii + 1) = d[ii];
+            L(5, 3*ii) = d[ii];
+        }
+        L *= 1/(2*volume);
+    }
+
+
 
     //might want to discard some points
 
