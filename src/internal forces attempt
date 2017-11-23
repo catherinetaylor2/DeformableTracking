@@ -1,0 +1,99 @@
+ // for(int i = 0; i < 6; ++i){
+    //     for(int j = 0; j < 12; ++j){
+    //         L(i,j) = 0.0f;
+    //     }
+    // }
+
+    // for(int i = 0; i< 1; ++i){
+    //     index1 = FaceVertices[3*i];
+    //     index2 = FaceVertices[3*i + 1];
+    //     index3 = FaceVertices[3*i + 2];
+
+    //     X[0] = newRigidPos[3*index1], Y[0] = newRigidPos[3*index1+1], Z[0] = newRigidPos[3*index1+2];
+    //     X[1]=  newRigidPos[3*index2], Y[1] = newRigidPos[3*index2+1], Z[1] = newRigidPos[3*index2+2];
+    //     X[2] = newRigidPos[3*index3], Y[2] = newRigidPos[3*index3+1], Z[2] = newRigidPos[3*index3+2];
+       
+    //     X[3] = third*(X[0]+X[1]+X[2]) - Normals[3*index1];
+    //     Y[3] = third*(Y[0]+Y[1]+Y[2]) - Normals[3*index1 + 1];
+    //     Z[3] = third*(Z[0]+Z[1]+Z[2]) - Normals[3*index1 + 2];
+   
+    //     dispExtraNode[3*i] = X[3];
+    //     dispExtraNode[3*i+1] = Y[3];
+    //     dispExtraNode[3*i+2] = Z[3];
+
+    //     disp<<  X[0] - Vertices[3*index1],
+    //             Y[0] - Vertices[3*index1+1],
+    //             Z[0] - Vertices[3*index1 +2],
+    //             X[1] - Vertices[3*index2],
+    //             Y[1] - Vertices[3*index2+1],
+    //             Z[1] - Vertices[3*index2 +2],
+    //             X[2] - Vertices[3*index3],
+    //             Y[2] - Vertices[3*index3+1],
+    //             Z[2] - Vertices[3*index3 +2],
+    //             X[3] - ExtraNode[3*i],
+    //             Y[3] - ExtraNode[3*i+1],
+    //             Z[3] - ExtraNode[3*i+2];
+
+
+    //     volume = fabs(1.0f/6.0f*((X[1]-X[0])*((Y[1]-Y[2])*(Z[2]-Z[3])-(Y[2]-Y[3])*(Z[1]-Z[2])) + (X[2]-X[1])*((Y[2]-Y[3])*(Z[0]-Z[1])-(Y[0]-Y[1])*(Z[2]-Z[3])) + (X[3]-X[2])*((Y[0]-Y[1])*(Z[1]-Z[2])-(Y[1]-Y[2])*(Z[0]-Z[1]))));        
+
+    //     for(int j = 0; j<4; ++j){
+    //         ii = j;
+    //         jj = (ii + 1)*(ii <= 2);
+    //         kk = (jj + 1)*(jj<=2); 
+    //         ll = (kk + 1)*(kk<=2);
+
+    //         Ai<< X[jj], Y[jj], Z[jj],
+    //             X[kk], Y[kk], Z[kk],
+    //             X[ll], Y[ll], Z[ll];
+
+    //         Bi<< 1, Y[jj], Z[jj],
+    //             1, Y[kk], Z[kk],
+    //             1, Y[ll], Z[ll];
+
+    //         Ci<< Y[jj], 1,  Z[jj],
+    //             Y[kk], 1,  Z[kk],
+    //             Y[ll], 1,  Z[ll];
+
+    //         Di<< Y[jj], Z[jj], 1,
+    //             Y[kk], Z[kk], 1,
+    //             Y[ll], Z[ll], 1;
+
+    //         a[ii] = Ai.determinant();
+    //         b[ii] = -1*Bi.determinant();
+    //         c[ii] = Ci.determinant();
+    //         d[ii] = -1*Di.determinant();
+
+    //         L(0, 3*ii) = b[ii];
+    //         L(3, 3*ii) = c[ii];
+    //         L(5, 3*ii) = d[ii];
+    //         L(1, 3*ii + 1) = c[ii];
+    //         L(2, 3*ii + 2) = d[ii];
+    //         L(4, 3*ii + 2) = c[ii];
+    //         L(3, 3*ii + 1) = b[ii];
+    //         L(5, 3*ii + 2) = b[ii];
+    //         L(4, 3*ii + 1) = d[ii];
+    //     }
+    //     L *= 1.0f/(2.0f*volume);
+    //     strain = L*disp;
+    //     stress = C*strain;
+    //     K = volume*(L.transpose()*C*L);
+    //     internalEnergy = K*disp;
+    // }
+        
+    // std::cout<<"K "<<K<<"\n";
+
+     //   float dispExtraNode [NumberOfFaces];
+
+    // C<< 1-poissonRatio, poissonRatio, poissonRatio, 0,0,0,
+    //     poissonRatio, 1 - poissonRatio, poissonRatio, 0,0,0,
+    //     poissonRatio, poissonRatio, 1- poissonRatio, 0,0,0,
+    //     0,0,0,shearMod, 0,0,
+    //     0,0,0,0,shearMod, 0,
+    //     0,0,0,0,0, shearMod;
+//     float volume;
+//     float youngModulus = 1.0f;
+//     float poissonRatio = 1.0f;
+//    // float shearMod = youngModulus/((1+poissonRatio)*2.0f);
+//     float a[4], b[4], c[4], d[4], X[4], Y[4], Z[4];
+//    // Eigen::MatrixXf Ai(3,3), Bi(3,3), Ci(3,3), Di(3,3), L(6, 12), strain(12,1), stress(6,1), disp(12,1), C(6,6), K(12,12), internalEnergy;

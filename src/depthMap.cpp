@@ -128,14 +128,6 @@ float ICP(std::vector<hVec3D>* VisPoints, std::vector<hVec3D> PointCloud, Eigen:
 
 int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertices, float* Normals, int NumberOfFaces, int NumberOfVertices, float* ExtraNode){
 
-    // float *Vertices, *Normals, *Textures; 
-    // int NumberOfFaces, *FaceVertices, *FaceNormals, *FaceTextures, NumberOfVertices;
-    // ObjFile mesh("../pipe.obj"); 
-    // if(!mesh.doesExist()){
-    //     std::cerr<<"Error: Object file does not exist \n";
-    //     return -1;
-    // }
-    // mesh.getMeshData(mesh, &FaceVertices, &FaceNormals, &FaceTextures, &Textures, &Normals, &Vertices, &NumberOfFaces, &NumberOfVertices);
 
     if(!glfwInit()){ // initialize GLFW
         std::cerr<<"Error: failed to initialize GLFW \n";
@@ -152,7 +144,7 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
     int height = 1000;
 
     GLFWwindow *window; //create openGL window
-    window = glfwCreateWindow(width, height, "Shadow Puppet", NULL, NULL);
+    window = glfwCreateWindow(width, height, "Window", NULL, NULL);
     
     if(window==NULL){
         std::cerr<<"Error: failed to open window";
@@ -213,7 +205,7 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
     GLuint MatrixID = glGetUniformLocation(programID, "MVP");
 
 
-    //do{// glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  //do{// glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer); //write to buffer  
         glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -241,7 +233,7 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
         glfwSwapBuffers(window);
         glfwPollEvents();
         
-  //}while(glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS && glfwWindowShouldClose(window)==0);
+//}while(glfwGetKey(window, GLFW_KEY_ESCAPE)!=GLFW_PRESS && glfwWindowShouldClose(window)==0);
     
   std::vector<hVec3D> RigidPoints;
   Eigen::MatrixXf currentPos(3,1), newPos;
@@ -260,28 +252,32 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
         int vx = (v.x + 1)*width/2.0f;
         int vy = (v.y +1)*height/2.0f;
         xyz << V.x, V.y, V.z, 1;
-        
-        if(v.z<=pixels[vx + width*(vy)]){ 
-            vis.push_back(i); //contains the index values
-            VisPoints.push_back(xyz);
+        VisPoints.push_back(xyz);
+        vis.push_back(i);
+        // if(v.z<=pixels[vx + width*(vy)]){ 
+        //     vis.push_back(i); //contains the index values
+        //     VisPoints.push_back(xyz);
            
-        }
+        // }
     }
     //--------------------------------------------------------------------
     //ICP:
     float E = 1000000000.0f;
-    float threshold =15;
+    float prevError = 0;
+    float threshold = 162;
     Eigen::MatrixXf R(3,3), t(3,1);
     t<<0,0,0;
     R<<1,0,0,
         0,1,0,
         0,0,1;
-   while(E>threshold){
+   while(fabs(E-prevError)>0.001f){
+        prevError = E;
         E = ICP( &VisPoints, PointCloud, &R, &t);
- }
+        std::cout<<"Error "<<E<<"\n";
+    }
 
     //transform mesh;
-
+std::cout<<"line 280 \n";
     for(int i =0; i<NumberOfVertices; ++i){
         glm::vec4 V(Vertices[3*i],Vertices[3*i+1],Vertices[3*i+2],1);
         glm::vec3 v = MVP*V;
@@ -293,41 +289,42 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
         xyz<<newPos(0,0), newPos(1,0), newPos(2,0),1;
         RigidPoints.push_back(xyz);
         
-       // if(vx + width*vy>=0 && vx + width*vy<=width*height){
-            // (*cloud)[vx + width*vy].x=newPos(0,0);
-            // (*cloud)[vx + width*vy].y=newPos(1,0);
-            // (*cloud)[vx + width*vy].z=newPos(2,0);
-            // (*cloud)[vx + width*vy].r=255;
-            // (*cloud)[vx + width*vy].g=255;
-            // (*cloud)[vx + width*vy].b=255;
-       // }
+       if(vx + width*vy>=0 && vx + width*vy<=width*height){
+            (*cloud)[vx + width*vy].x=newPos(0,0);
+            (*cloud)[vx + width*vy].y=newPos(1,0);
+            (*cloud)[vx + width*vy].z=newPos(2,0);
+            (*cloud)[vx + width*vy].r=255;
+            (*cloud)[vx + width*vy].g=255;
+            (*cloud)[vx + width*vy].b=255;
+       }
     }
-//     for(int i =0; i< PointCloud.size(); ++i){
-//         glm::vec4 V(PointCloud[i](0),PointCloud[i](1),PointCloud[i](2),1);
-//         glm::vec3 v = MVP*V;
-//         int vx = (v.x + 1)*width/2.0f;
-//         int vy = (v.y +1)*height/2.0f;
+    std::cout<<"line 301 \n";
+        for(int i =0; i< PointCloud.size(); ++i){
+        glm::vec4 V(PointCloud[i](0),PointCloud[i](1),PointCloud[i](2),1);
+        glm::vec3 v = MVP*V;
+        int vx = (v.x + 1)*width/2.0f;
+        int vy = (v.y +1)*height/2.0f;
         
-//        // if(vx + width*vy>=0 && vx + width*vy<=width*height){
-//             (*cloud)[vx + width*vy].x=V.x;
-//             (*cloud)[vx + width*vy].y=V.y;
-//             (*cloud)[vx + width*vy].z=V.z;
-//             (*cloud)[vx + width*vy].r=255;
-//             (*cloud)[vx + width*vy].g=0;
-//             (*cloud)[vx + width*vy].b=0;
-//     }
+       // if(vx + width*vy>=0 && vx + width*vy<=width*height){
+            (*cloud)[vx + width*vy].x=V.x;
+            (*cloud)[vx + width*vy].y=V.y;
+            (*cloud)[vx + width*vy].z=V.z;
+            (*cloud)[vx + width*vy].r=255;
+            (*cloud)[vx + width*vy].g=0;
+            (*cloud)[vx + width*vy].b=0;
+    }
 
-
+std::cout<<"line 316 \n";
  
-//    pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
-//    viewer.showCloud (cloud);
+   pcl::visualization::CloudViewer viewer ("Simple Cloud Viewer");
+   viewer.showCloud (cloud);
   
-//     while (!viewer.wasStopped ())
-//    {
-//     }
+    while (!viewer.wasStopped ())
+   {
+    }
 
-    //NEAREST NEIGHBOUR CORRESPONDANCES
-    //FOR FEM MESH
+    // NEAREST NEIGHBOUR CORRESPONDANCES
+    // FOR FEM MESH
 
     Eigen::MatrixXf ePointCloud(PointCloud.size(), 3);    
     for(int i = 0; i< PointCloud.size(); ++i){
@@ -356,7 +353,7 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
         Meshpairs.push_back(currentPair);
     }
 
-    //FOR POINT CLOUD
+    // FOR POINT CLOUD
     Eigen::MatrixXf eVisPoints(VisPoints.size(), 3);
     for(int i =0; i< VisPoints.size(); ++i){
         eVisPoints.row(i)<<VisPoints[i](0), VisPoints[i](1), VisPoints[i](2);
@@ -383,18 +380,34 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
         Cloudpairs.push_back(currentPair);
     }
 
-    //GET EXTERNAL FORCES
+    //     ADD IN EXTRA NODE + Find volume of each tetrahedron
+
+    int index1, index2, index3, ii, jj, kk, ll;
+    float third = 1.0f/3.0f;
+    float newRigidPos [NumberOfVertices];
+
+    for(int i =0; i< NumberOfVertices; ++i){ 
+        newRigidPos[3*i] = Vertices[3*i];
+        newRigidPos[3*i+1] = Vertices[3*i+1];
+        newRigidPos[3*i+2] = Vertices[3*i+2];
+    }
+    for (int i = 0; i<VisPoints.size(); ++i){
+        newRigidPos[3*vis[i]] = VisPoints[i](0,0);
+        newRigidPos[3*vis[i]+1] = VisPoints[i](1,0);
+        newRigidPos[3*vis[i]+2] = VisPoints[i](2,0);
+    }
+   
+   // GET EXTERNAL FORCES
 
     float lambda = 1.0f;
     float k = 0.7f; //youngs modulous
     float w_i = 1.0f;
     int N [VisPoints.size()];
     hVec3D Nsum [VisPoints.size()];
-    hVec3D force[NumberOfVertices];
-    float newRigidPos [NumberOfVertices];
+    hVec3D force[NumberOfVertices + NumberOfFaces]; //faces deals with extranodes
     std::vector<hVec3D> y;
     hVec3D currentY;
- //  int y[VisPoints.size()];
+
     for(int i = 0; i< VisPoints.size(); ++i){
         N[i] = 0;
         Nsum[i]<< 0,0,0,0;
@@ -414,119 +427,15 @@ int getDepthMap(std::vector<hVec3D> PointCloud, int* FaceVertices, float* Vertic
            y.push_back(currentY);
         }
     }
-    for(int i =0; i< NumberOfVertices; ++i){ // non vis points have 0 forvce
+    for(int i =0; i< NumberOfVertices+ NumberOfFaces; ++i){ // non vis points have 0 forvce
         force[i] << 0.0f, 0.0f, 0.0f, 0.0f;
-        newRigidPos[3*i] = Vertices[3*i];
-        newRigidPos[3*i+1] = Vertices[3*i+1];
-        newRigidPos[3*i+2] = Vertices[3*i+2];
     }
     for (int i = 0; i<VisPoints.size(); ++i){
         force[vis[i]] = w_i*k*(VisPoints[i] - y[i]);
-        newRigidPos[3*vis[i]] = VisPoints[i](0,0);
-        newRigidPos[3*vis[i]+1] = VisPoints[i](1,0);
-        newRigidPos[3*vis[i]+2] = VisPoints[i](2,0);
     }
-
-    //ADD IN EXTRA NODE + Find volume of each tetrahedron
-   // hVec2D ExtraNode[NumberOfFaces];
-    float volume;
-    float a[4], b[4], c[4], d[4], X[4], Y[4], Z[4];
-    Eigen::MatrixXf A(3,3), B(3,3), C(3,3), D(3,3), L(6, 12), cauchystrain(12,1), disp(12,1);
-    int index1, index2, index3, ii, jj, kk, ll;
-    float third = 1.0f/3.0f;
-
-    // for(int i = 0; i< NumberOfFaces; ++i){ //MOVE OUTSIDE THIS FILE
-    //     index1 = FaceVertices[3*i];
-    //     index2 = FaceVertices[3*i +1];
-    //     index3 = FaceVertices[3*i +2];
-
-    //     X[0] = Vertices[3*index1], Y[0] = Vertices[3*index1+1], Z[0] = Vertices[3*index1+2];
-    //     X[1]=  Vertices[3*index2], Y[1] = Vertices[3*index2+1], Z[1] = Vertices[3*index2+2];
-    //     X[2] = Vertices[3*index3], Y[2] = Vertices[3*index3+1], Z[2] = Vertices[3*index3+2];
-       
-    //     X[3] = third*(X[0]+X[1]+X[2]);
-    //     Y[3] = third*(Y[0]+Y[1]+Y[2]);
-    //     Z[3] = third*(Z[0]+Z[1]+Z[2]);
-    //     Z[3] += -1*Normals[3*index1+1];
-    //     ExtraNode[i]<<X[3], Y[3], Z[3], 1;
-
-    // }
-
-    for(int i = 0; i< NumberOfFaces; ++i){
-        index1 = FaceVertices[3*i];
-        index2 = FaceVertices[3*i +1];
-        index3 = FaceVertices[3*i +2];
-
-        X[0] = newRigidPos[3*index1], Y[0] = newRigidPos[3*index1+1], Z[0] = newRigidPos[3*index1+2];
-        X[1]=  newRigidPos[3*index2], Y[1] = newRigidPos[3*index2+1], Z[1] = newRigidPos[3*index2+2];
-        X[2] = newRigidPos[3*index3], Y[2] = newRigidPos[3*index3+1], Z[2] = newRigidPos[3*index3+2];
-       
-        X[3] = third*(X[0]+X[1]+X[2]);
-        Y[3] = third*(Y[0]+Y[1]+Y[2]);
-        Z[3] = third*(Z[0]+Z[1]+Z[2]);
-        Z[3] += -1*Normals[3*index1+1];
-
-        disp<<  X[0] - Vertices[3*index1],
-                Y[0] - Vertices[3*index1+1],
-                Z[0] - Vertices[3*index1 +2],
-                X[1] - Vertices[3*index2],
-                Y[1] - Vertices[3*index2+1],
-                Z[1] - Vertices[3*index2 +2],
-                X[2] - Vertices[3*index3],
-                Y[2] - Vertices[3*index3+1],
-                Z[2] - Vertices[3*index3 +2],
-                X[3] - ExtraNode[3*i],
-                Y[3] - ExtraNode[3*i+1],
-                Z[3] - ExtraNode[3*i+2];
-
-
-        volume = 1.0f/6.0f*((X[1]-X[0])*((Y[1]-Y[2])*(Z[2]-Z[3])-(Y[2]-Y[3])*(Z[1]-Z[2])) + (X[2]-X[1])*((Y[2]-Y[3])*(Z[0]-Z[1])-(Y[0]-Y[1])*(Z[2]-Z[3])) + (X[3]-X[2])*((Y[0]-Y[1])*(Z[1]-Z[2])-(Y[1]-Y[2])*(Z[0]-Z[1])));        
-
-        for(int j = 0; j<4; ++j){
-            ii = j;
-            jj = (ii + 1)*(ii <= 2);
-            kk = (jj + 1)*(jj<=2); 
-            ll = (kk + 1)*(kk<=2);
-
-            A<< X[jj], Y[jj], Z[jj],
-                X[kk], Y[kk], Z[kk],
-                X[ll], Y[ll], Z[ll];
-
-            B<< 1, Y[jj], Z[jj],
-                1, Y[kk], Z[kk],
-                1, Y[ll], Z[ll];
-
-            C<< Y[jj], 1,  Z[jj],
-                Y[kk], 1,  Z[kk],
-                Y[ll], 1,  Z[ll];
-
-            D<< Y[jj], Z[jj], 1,
-                Y[kk], Z[kk], 1,
-                Y[ll], Z[ll], 1;
-
-            a[ii] = A.determinant();
-            b[ii] = -1*B.determinant();
-            c[ii] = C.determinant();
-            d[ii] = -1*D.determinant();
-
-            L(0, 3*ii) = b[ii];
-            L(3, 3*ii) = c[ii];
-            L(5, 3*ii) = d[ii];
-            L(1, 3*ii + 1) = c[ii];
-            L(2, 3*ii + 2) = d[ii];
-            L(4, 3*ii + 2) = c[ii];
-            L(3, 3*ii + 1) = b[ii];
-            L(5, 3*ii + 2) = b[ii];
-            L(4, 3*ii + 1) = d[ii];
-        }
-        L *= 1/(2*volume);
-        cauchystrain = L*disp;
-    }
-
 
     //might want to discard some points
 
-    // ObjFile::cleanUp(Vertices,Normals, Textures, FaceVertices, FaceNormals, FaceTextures);
     glDeleteBuffers(1, &textureID);
     glDeleteFramebuffers(1, &framebuffer); 
 

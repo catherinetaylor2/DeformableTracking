@@ -16,13 +16,14 @@ int main(){
 //Load in original mesh
     float *Vertices, *Normals, *Textures; 
     int NumberOfFaces, *FaceVertices, *FaceNormals, *FaceTextures, NumberOfVertices;
-    ObjFile mesh("../pipe.obj"); 
+    ObjFile mesh("../c.obj"); 
     if(!mesh.doesExist()){
         std::cerr<<"Error: Object file does not exist \n";
         return -1;
     }
     mesh.getMeshData(mesh, &FaceVertices, &FaceNormals, &FaceTextures, &Textures, &Normals, &Vertices, &NumberOfFaces, &NumberOfVertices);
-   // hVec2D ExtraNode[NumberOfFaces];
+   
+   //hVec2D ExtraNode[NumberOfFaces];
     float* ExtraNode = new float [3*NumberOfFaces];
     float  X[4], Y[4], Z[4];
     int index1, index2, index3;
@@ -46,37 +47,36 @@ int main(){
         ExtraNode[3*i+2] = Z[3];
     }
 
+   int priorSegementation =  PriorSegmentation("../Frames/0000.png");
+   if(priorSegementation == -1){
+       std::cerr<<"Error: Prior Segmentation has failed \n";
+       return -1;
+    }
 
-
-//    int priorSegementation =  PriorSegmentation("../Frames/0000.png");
-//    if(priorSegementation == -1){
-//        std::cerr<<"Error: Prior Segmentation has failed \n";
-//        return -1;
-//     }
-
-//   for(int i =0; i<50; ++i){
-//         std::cout<<"frame "<<i<<"\n";
-//         std::string j, jPrev;
-//         if(i < 10){
-//             jPrev = "000" + std::to_string(i);
-//         }
-//         else if(i>=10&&i<100){
-//             jPrev = "00" + std::to_string(i);
-//         }
-//         if((i+1) < 10){
-//             j = "000" + std::to_string(i+1);
-//         }
-//         else if((i+1)>=10&&(i+1)<100){
-//             j = "00" + std::to_string(i+1);
-//         }
+  for(int i =0; i<5; ++i){
+        std::cout<<"frame "<<i<<"\n";
+        std::string j, jPrev;
+        if(i < 10){
+            jPrev = "000" + std::to_string(i);
+        }
+        else if(i>=10&&i<100){
+            jPrev = "00" + std::to_string(i);
+        }
+        if((i+1) < 10){
+            j = "000" + std::to_string(i+1);
+        }
+        else if((i+1)>=10&&(i+1)<100){
+            j = "00" + std::to_string(i+1);
+        }
     
-//         int distFun = SegmentImage("../SegmentedImages/" + jPrev +".png", "../Frames/" + j +".png", "../depthMatrices/" + j + ".yml");
-//         if(distFun == -1){
-//             std::cerr<<"Error: Segmentation has failed on frame "<< i << "\n";
-//         }
-//  }
-    std::vector<hVec3D> pointCloud =  getPointCloud("../SegmentedDepth/0001.yml");
-    int i = getDepthMap(pointCloud, FaceVertices, Vertices, Normals, NumberOfFaces, NumberOfVertices, ExtraNode);
+        int distFun = SegmentImage("../SegmentedImages/" + jPrev +".png", "../Frames/" + j +".png", "../depthMatrices/" + j + ".yml");
+        if(distFun == -1){
+            std::cerr<<"Error: Segmentation has failed on frame "<< i << "\n";
+        }
+        std::vector<hVec3D> pointCloud =  getPointCloud("../SegmentedDepth/"+ j+ ".yml");
+        int k = getDepthMap(pointCloud, FaceVertices, Vertices, Normals, NumberOfFaces, NumberOfVertices, ExtraNode);
+ }
+
 
 
     ObjFile::cleanUp(Vertices,Normals, Textures, FaceVertices, FaceNormals, FaceTextures);
